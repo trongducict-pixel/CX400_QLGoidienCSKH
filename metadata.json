@@ -1,0 +1,6 @@
+{
+  "name": "CX400 – Nhắc lịch gọi điện CSKH",
+  "description": "Hệ thống quản lý chiến dịch gọi điện chăm sóc khách hàng - VietinBank Chi nhánh Ninh Bình (Phòng DVKH)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
