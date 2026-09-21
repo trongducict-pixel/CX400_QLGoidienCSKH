@@ -1,11 +1,13 @@
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'admin' | 'manager' | 'staff';
 
 export interface User {
   id: string;
+  employeeId?: string;
   username: string;
   password?: string;
   fullName: string;
   email?: string;
+  department?: string;
   role: UserRole;
   active: boolean;
   phone?: string;
@@ -13,13 +15,14 @@ export interface User {
 }
 
 export interface GoogleSheetsConfig {
-  spreadsheetId: string;
+  spreadsheetId?: string;
   sheetUrl?: string;
-  webhookUrl?: string; // Google Apps Script Web App URL for real-time live sync
+  webhookUrl: string; // Google Apps Script Web App URL for real-time live sync
   autoSync: boolean;
   lastSyncedAt?: string;
   syncStatus?: 'idle' | 'syncing' | 'success' | 'error';
   syncError?: string;
+  totalSyncedRecords?: number;
 }
 
 export type CampaignStatus = 'draft' | 'in_progress' | 'completed' | 'closed';

@@ -20,67 +20,316 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'cx400_current_user',
 };
 
-// Default seed users
+// Default seed users representing 3 tiers: Admin, Trưởng/Phó phòng (manager), Nhân viên (staff)
+// Dữ liệu danh sách cán bộ Phòng DVKH - VietinBank Chi nhánh Ninh Bình
 const INITIAL_USERS: User[] = [
+  // 1. Quản trị viên hệ thống (Admin)
   {
     id: 'u-admin',
+    employeeId: '00000001',
     username: 'admin',
-    password: '123456',
-    fullName: 'Nguyễn Thu Hương',
-    title: 'Trưởng phòng DVKH',
+    password: '123',
+    fullName: 'Quản trị viên hệ thống',
+    department: 'Phòng DVKH',
+    title: 'Quản trị viên hệ thống CX400',
     role: 'admin',
     active: true,
-    phone: '0912345678',
+    phone: '1900558868',
+    email: 'ADMIN@VIETINBANK.VN',
   },
+  // 2. Kỹ sư Điện toán (Admin / Quản trị CNTT)
   {
-    id: 'u-cb01',
-    username: 'cb01',
-    password: '123456',
-    fullName: 'Nguyễn Văn A',
-    title: 'Cán bộ CSKH',
+    id: 'u-00053550',
+    employeeId: '00053550',
+    username: 'ducnt4',
+    password: '123',
+    fullName: 'Nguyễn Trọng Đức',
+    department: 'Phòng DVKH',
+    title: 'Kỹ sư Điện toán',
+    role: 'admin',
+    active: true,
+    phone: '0943882109',
+    email: 'DUCNT4@VIETINBANK.VN',
+  },
+  // 3. Trưởng phòng Dịch vụ KH (Manager)
+  {
+    id: 'u-00006948',
+    employeeId: '00006948',
+    username: 'pthiha',
+    password: '123',
+    fullName: 'Phạm Thị Hà',
+    department: 'Phòng DVKH',
+    title: 'Trưởng phòng Dịch vụ KH',
+    role: 'manager',
+    active: true,
+    phone: '0915209091',
+    email: 'PTHIHA@VIETINBANK.VN',
+  },
+  // 4. Phó phòng Dịch vụ KH (TTKQ) (Manager)
+  {
+    id: 'u-00006935',
+    employeeId: '00006935',
+    username: 'dandq',
+    password: '123',
+    fullName: 'Đinh Quang Dân',
+    department: 'Phòng DVKH',
+    title: 'Phó phòng Dịch vụ KH (TTKQ)',
+    role: 'manager',
+    active: true,
+    phone: '0947676868',
+    email: 'DANDQ@VIETINBANK.VN',
+  },
+  // 5. Phó phòng Dịch vụ KH (Kế toán) (Manager)
+  {
+    id: 'u-00006950',
+    employeeId: '00006950',
+    username: 'dt.hue',
+    password: '123',
+    fullName: 'Đỗ Thị Huế',
+    department: 'Phòng DVKH',
+    title: 'Phó phòng Dịch vụ KH (Kế toán)',
+    role: 'manager',
+    active: true,
+    phone: '0945268885',
+    email: 'DT.HUE@VIETINBANK.VN',
+  },
+  // 6. Phó phòng Dịch vụ KH (Kế toán) (Manager)
+  {
+    id: 'u-00021989',
+    employeeId: '00021989',
+    username: 'ttquy',
+    password: '123',
+    fullName: 'Trương Thanh Quý',
+    department: 'Phòng DVKH',
+    title: 'Phó phòng Dịch vụ KH (Kế toán)',
+    role: 'manager',
+    active: true,
+    phone: '0916884849',
+    email: 'TTQUY@VIETINBANK.VN',
+  },
+  // 7. Thủ quỹ (Staff)
+  {
+    id: 'u-00006959',
+    employeeId: '00006959',
+    username: 'vunm',
+    password: '123',
+    fullName: 'Nguyễn Minh Vũ',
+    department: 'Phòng DVKH',
+    title: 'Thủ quỹ',
     role: 'staff',
     active: true,
-    phone: '0988111222',
+    phone: '0838608888',
+    email: 'VUNM@VIETINBANK.VN',
   },
+  // 8. Thủ quỹ (Staff)
   {
-    id: 'u-cb02',
-    username: 'cb02',
-    password: '123456',
-    fullName: 'Trần Thị B',
-    title: 'Cán bộ CSKH',
+    id: 'u-00006978',
+    employeeId: '00006978',
+    username: 'lien.ltk',
+    password: '123',
+    fullName: 'Lương Thị Kim Liên',
+    department: 'Phòng DVKH',
+    title: 'Thủ quỹ',
     role: 'staff',
     active: true,
-    phone: '0977222333',
+    phone: '0973122679',
+    email: 'LIEN.LTK@VIETINBANK.VN',
   },
+  // 9. Thủ quỹ (Staff)
   {
-    id: 'u-cb03',
-    username: 'cb03',
-    password: '123456',
-    fullName: 'Lê Văn C',
-    title: 'Cán bộ CSKH',
+    id: 'u-00006980',
+    employeeId: '00006980',
+    username: 'thuanpty',
+    password: '123',
+    fullName: 'Phạm Thị Yến Thuận',
+    department: 'Phòng DVKH',
+    title: 'Thủ quỹ',
     role: 'staff',
     active: true,
-    phone: '0911333444',
+    phone: '0917900250',
+    email: 'THUANPTY@VIETINBANK.VN',
   },
+  // 10. Thủ quỹ (Staff)
   {
-    id: 'u-cb04',
-    username: 'cb04',
-    password: '123456',
-    fullName: 'Phạm Thị D',
-    title: 'Cán bộ CSKH',
+    id: 'u-00006994',
+    employeeId: '00006994',
+    username: 'thuynt400',
+    password: '123',
+    fullName: 'Nguyễn Thị Thủy',
+    department: 'Phòng DVKH',
+    title: 'Thủ quỹ',
     role: 'staff',
     active: true,
-    phone: '0933444555',
+    phone: '0948422368',
+    email: 'THUYNT400@VIETINBANK.VN',
   },
+  // 11. Thủ quỹ (Staff)
   {
-    id: 'u-cb05',
-    username: 'cb05',
-    password: '123456',
-    fullName: 'Hoàng Thị E',
-    title: 'Cán bộ CSKH',
+    id: 'u-00030000',
+    employeeId: '00030000',
+    username: 'anhct',
+    password: '123',
+    fullName: 'Cù Thế Anh',
+    department: 'Phòng DVKH',
+    title: 'Thủ quỹ',
     role: 'staff',
     active: true,
-    phone: '0966555666',
+    phone: '0977935552',
+    email: 'ANHCT@VIETINBANK.VN',
+  },
+  // 12. Thủ kho (Staff)
+  {
+    id: 'u-00015068',
+    employeeId: '00015068',
+    username: 'tuyetdtl',
+    password: '123',
+    fullName: 'Đinh Thị Lệ Tuyết',
+    department: 'Phòng DVKH',
+    title: 'Thủ kho',
+    role: 'staff',
+    active: true,
+    phone: '0344790810',
+    email: 'TUYETDTL@VIETINBANK.VN',
+  },
+  // 13. Nhân viên kế toán tài chính (Staff)
+  {
+    id: 'u-00015065',
+    employeeId: '00015065',
+    username: 'oanh.th',
+    password: '123',
+    fullName: 'Trần Hoàng Oanh',
+    department: 'Phòng DVKH',
+    title: 'Nhân viên kế toán tài chính',
+    role: 'staff',
+    active: true,
+    phone: '0912872173',
+    email: 'OANH.TH@VIETINBANK.VN',
+  },
+  // 14. GDV độc lập (Staff)
+  {
+    id: 'u-00015042',
+    employeeId: '00015042',
+    username: 'thuth',
+    password: '123',
+    fullName: 'Tạ Hà Thu',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0949128737',
+    email: 'THUTH@VIETINBANK.VN',
+  },
+  // 15. GDV độc lập (Staff)
+  {
+    id: 'u-00015048',
+    employeeId: '00015048',
+    username: 'yenvth',
+    password: '123',
+    fullName: 'Vũ Thị Hải Yến',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0915378184',
+    email: 'YENVTH@VIETINBANK.VN',
+  },
+  // 16. GDV độc lập (Staff)
+  {
+    id: 'u-00015062',
+    employeeId: '00015062',
+    username: 'dthphuong',
+    password: '123',
+    fullName: 'Đoàn Thị Hải Phượng',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0979051287',
+    email: 'DTHPHUONG@VIETINBANK.VN',
+  },
+  // 17. GDV độc lập (Staff)
+  {
+    id: 'u-00030628',
+    employeeId: '00030628',
+    username: 'anhltn1',
+    password: '123',
+    fullName: 'Lê Thị Ngọc Anh',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0948326676',
+    email: 'ANHLTN1@VIETINBANK.VN',
+  },
+  // 18. GDV độc lập (Staff)
+  {
+    id: 'u-00038210',
+    employeeId: '00038210',
+    username: 'huent14',
+    password: '123',
+    fullName: 'Nguyễn Thị Huế',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0966877969',
+    email: 'HUENT14@VIETINBANK.VN',
+  },
+  // 19. GDV độc lập (Staff)
+  {
+    id: 'u-00041358',
+    employeeId: '00041358',
+    username: 'locltm',
+    password: '123',
+    fullName: 'Lê Thị Mỹ Lộc',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0946894152',
+    email: 'LOCLTM@VIETINBANK.VN',
+  },
+  // 20. GDV độc lập (Staff)
+  {
+    id: 'u-00041361',
+    employeeId: '00041361',
+    username: 'thuytt18',
+    password: '123',
+    fullName: 'Thái Thị Thủy',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0973710152',
+    email: 'THUYTT18@VIETINBANK.VN',
+  },
+  // 21. GDV độc lập (Staff)
+  {
+    id: 'u-00051875',
+    employeeId: '00051875',
+    username: 'phly',
+    password: '123',
+    fullName: 'Phạm Hương Ly',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '0367123462',
+    email: 'PHLY@VIETINBANK.VN',
+  },
+  // 22. GDV độc lập (Staff)
+  {
+    id: 'u-00055890',
+    employeeId: '00055890',
+    username: 'chihl',
+    password: '123',
+    fullName: 'Hoàng Linh Chi',
+    department: 'Phòng DVKH',
+    title: 'GDV độc lập',
+    role: 'staff',
+    active: true,
+    phone: '',
+    email: 'CHIHL@VIETINBANK.VN',
   },
 ];
 
@@ -388,7 +637,33 @@ export const db = {
   // USERS
   getUsers(): User[] {
     const raw = localStorage.getItem(STORAGE_KEYS.USERS);
-    return raw ? JSON.parse(raw) : INITIAL_USERS;
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+      return INITIAL_USERS;
+    }
+    let users: User[] = JSON.parse(raw);
+    // Check if official VietinBank Ninh Binh personnel roster is loaded
+    const hasOfficialStaff = users.some(
+      (u) => u.username === 'dandq' || u.username === 'pthiha' || u.username === 'ducnt4'
+    );
+    if (!hasOfficialStaff) {
+      users = INITIAL_USERS;
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    } else {
+      // Ensure all accounts default to password '123' as required (including admin)
+      let updated = false;
+      users = users.map((u) => {
+        if (!u.password || u.password === '123456') {
+          updated = true;
+          return { ...u, password: '123' };
+        }
+        return u;
+      });
+      if (updated) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      }
+    }
+    return users;
   },
 
   getUserById(id: string): User | undefined {
@@ -401,11 +676,20 @@ export const db = {
 
   getCurrentUser(): User | null {
     const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const user: User = JSON.parse(raw);
+    if (user.password === '123456') {
+      user.password = '123';
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    }
+    return user;
   },
 
   setCurrentUser(user: User | null): void {
     if (user) {
+      if (user.password === '123456') {
+        user.password = '123';
+      }
       localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
     } else {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
@@ -425,7 +709,7 @@ export const db = {
       users[idx] = user;
     } else {
       if (!user.password) {
-        user.password = '123456'; // Default password
+        user.password = '123'; // Default password: 123
       }
       users.push(user);
     }
@@ -481,6 +765,41 @@ export const db = {
       target: `${target.fullName} (${target.username})`,
       details: `Đã xóa tài khoản khỏi hệ thống`,
     });
+  },
+
+  // GOOGLE SHEETS CONFIG (Mặc định URL do người dùng cung cấp)
+  getGoogleSheetsConfig(): GoogleSheetsConfig {
+    const raw = localStorage.getItem('cx400_google_sheets_config');
+    const defaultConfig: GoogleSheetsConfig = {
+      webhookUrl: 'https://script.google.com/macros/s/AKfycbyQodR_gsJ_p3J4brMX5nUqOKBcYvdNIsySm_fb9t9oPfAWoEYiklv1UncAWS5bbAHN1g/exec',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1AbC_VietinBank_NinhBinh_CX400_DataSync/edit',
+      autoSync: true,
+      syncStatus: 'idle',
+      totalSyncedRecords: 0,
+    };
+
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Ensure the user's requested default webhook URL is present if blank or old
+      if (!parsed.webhookUrl || !parsed.webhookUrl.includes('AKfycbyQodR_gsJ_p3J4brMX5nUqOKBcYvdNIsySm_fb9t9oPfAWoEYiklv1UncAWS5bbAHN1g')) {
+        parsed.webhookUrl = defaultConfig.webhookUrl;
+      }
+      return { ...defaultConfig, ...parsed };
+    }
+    return defaultConfig;
+  },
+
+  saveGoogleSheetsConfig(config: GoogleSheetsConfig, adminUser?: User): void {
+    localStorage.setItem('cx400_google_sheets_config', JSON.stringify(config));
+    if (adminUser) {
+      this.addActivityLog({
+        userId: adminUser.id,
+        userName: adminUser.fullName,
+        action: 'Cập nhật cấu hình Google Sheets',
+        target: 'Google Sheets Webhook',
+        details: `Webhook: ${config.webhookUrl} | Tự động đồng bộ: ${config.autoSync ? 'Bật' : 'Tắt'}`,
+      });
+    }
   },
 
   // CAMPAIGNS

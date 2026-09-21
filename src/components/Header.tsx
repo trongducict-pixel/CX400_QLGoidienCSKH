@@ -99,20 +99,26 @@ export function Header({ currentUser, onUserChange, onResetData, callbackCount =
                 type="button"
                 onClick={() => setShowSwitchMenu(!showSwitchMenu)}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors"
-                title="Chuyển đổi tài khoản demo để kiểm thử"
+                title="Chuyển đổi tài khoản demo để kiểm thử 3 nhóm quyền"
               >
                 <div className="flex items-center gap-1.5">
                   {currentUser.role === 'admin' ? (
-                    <Shield className="w-3.5 h-3.5 text-red-600" />
+                    <Shield className="w-3.5 h-3.5 text-purple-600" />
+                  ) : currentUser.role === 'manager' ? (
+                    <Shield className="w-3.5 h-3.5 text-blue-600" />
                   ) : (
-                    <UserIcon className="w-3.5 h-3.5 text-blue-600" />
+                    <UserIcon className="w-3.5 h-3.5 text-emerald-600" />
                   )}
                   <div className="text-left">
                     <span className="font-bold text-slate-800 block truncate max-w-[110px] sm:max-w-[150px]">
                       {currentUser.fullName}
                     </span>
                     <span className="text-[10px] font-normal text-slate-500 block">
-                      {currentUser.role === 'admin' ? 'Lãnh đạo (Admin)' : `Cán bộ (${currentUser.username})`}
+                      {currentUser.role === 'admin'
+                        ? 'Admin (Toàn quyền)'
+                        : currentUser.role === 'manager'
+                        ? 'Trưởng/Phó phòng'
+                        : `Cán bộ (${currentUser.username})`}
                     </span>
                   </div>
                 </div>
@@ -121,22 +127,25 @@ export function Header({ currentUser, onUserChange, onResetData, callbackCount =
 
               {/* Switch Menu Dropdown */}
               {showSwitchMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2">
-                  <div className="px-3 py-1.5 border-b border-slate-100 font-bold text-slate-500 uppercase tracking-wider text-[10px]">
-                    Chuyển đổi tài khoản demo
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2">
+                  <div className="px-3 py-1.5 border-b border-slate-100 font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center justify-between">
+                    <span>Chuyển đổi nhanh 3 nhóm quyền</span>
                   </div>
 
-                  <div className="p-1 space-y-1">
-                    <div className="text-[11px] font-semibold text-slate-400 px-2 pt-1">LÃNH ĐẠO:</div>
+                  <div className="p-1 space-y-1 max-h-[380px] overflow-y-auto">
+                    {/* ADMIN */}
+                    <div className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
+                      QUẢN TRỊ VIÊN (ADMIN - TOÀN QUYỀN):
+                    </div>
                     {allUsers
                       .filter((u) => u.role === 'admin')
                       .map((u) => (
                         <button
                           key={u.id}
                           onClick={() => handleSwitch(u)}
-                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between transition-colors ${
+                          className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center justify-between transition-colors ${
                             currentUser.id === u.id
-                              ? 'bg-red-50 text-[#BE1E2D] font-bold'
+                              ? 'bg-purple-100 text-purple-900 font-bold'
                               : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
@@ -145,23 +154,24 @@ export function Header({ currentUser, onUserChange, onResetData, callbackCount =
                             <div className="text-[10px] text-slate-400">Tài khoản: {u.username} • {u.title}</div>
                           </div>
                           {currentUser.id === u.id && (
-                            <span className="w-2 h-2 rounded-full bg-[#BE1E2D]"></span>
+                            <span className="w-2 h-2 rounded-full bg-purple-600"></span>
                           )}
                         </button>
                       ))}
 
-                    <div className="text-[11px] font-semibold text-slate-400 px-2 pt-2 border-t border-slate-100">
-                      CÁN BỘ PHỤ TRÁCH GỌI ĐIỆN:
+                    {/* MANAGER */}
+                    <div className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded mt-2">
+                      LÃNH ĐẠO PHÒNG (TRƯỞNG/PHÓ PHÒNG):
                     </div>
                     {allUsers
-                      .filter((u) => u.role === 'staff')
+                      .filter((u) => u.role === 'manager')
                       .map((u) => (
                         <button
                           key={u.id}
                           onClick={() => handleSwitch(u)}
                           className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center justify-between transition-colors ${
                             currentUser.id === u.id
-                              ? 'bg-blue-50 text-blue-700 font-bold'
+                              ? 'bg-blue-100 text-blue-900 font-bold'
                               : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
@@ -171,6 +181,32 @@ export function Header({ currentUser, onUserChange, onResetData, callbackCount =
                           </div>
                           {currentUser.id === u.id && (
                             <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                          )}
+                        </button>
+                      ))}
+
+                    {/* STAFF */}
+                    <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded mt-2">
+                      NHÂN VIÊN (CÁN BỘ TIẾP NHẬN & GỌI ĐIỆN):
+                    </div>
+                    {allUsers
+                      .filter((u) => u.role === 'staff')
+                      .map((u) => (
+                        <button
+                          key={u.id}
+                          onClick={() => handleSwitch(u)}
+                          className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center justify-between transition-colors ${
+                            currentUser.id === u.id
+                              ? 'bg-emerald-100 text-emerald-900 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">{u.fullName}</div>
+                            <div className="text-[10px] text-slate-400">Tài khoản: {u.username} • {u.title}</div>
+                          </div>
+                          {currentUser.id === u.id && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
                           )}
                         </button>
                       ))}

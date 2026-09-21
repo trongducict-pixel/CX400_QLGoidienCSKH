@@ -20,7 +20,7 @@ export default function App() {
 
   // Navigation tab
   const [activeTab, setActiveTab] = useState<ActiveTab>(() =>
-    currentUser?.role === 'admin' ? 'dashboard' : 'staff_call'
+    currentUser?.role === 'staff' ? 'staff_call' : 'dashboard'
   );
 
   // Selected campaign for detail view
@@ -28,6 +28,9 @@ export default function App() {
 
   // Modal for campaign creation
   const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false);
+
+  // Target customer ID when jumping directly to calling view
+  const [callingCustomerId, setCallingCustomerId] = useState<string | null>(null);
 
   // Database entities in state
   const [users, setUsers] = useState<User[]>([]);
@@ -56,7 +59,7 @@ export default function App() {
   const handleUserChange = (user: User | null) => {
     setCurrentUser(user);
     if (user) {
-      setActiveTab(user.role === 'admin' ? 'dashboard' : 'staff_call');
+      setActiveTab(user.role === 'staff' ? 'staff_call' : 'dashboard');
     }
     setSelectedCampaignId(null);
     loadData();
@@ -77,6 +80,7 @@ export default function App() {
 
   // Switch to calling a specific customer
   const handleCallCustomer = (customerId: string, campaignId: string) => {
+    setCallingCustomerId(customerId);
     setActiveTab('staff_call');
   };
 
@@ -107,6 +111,9 @@ export default function App() {
   }
 
   const isAdmin = currentUser.role === 'admin';
+  const isManager = currentUser.role === 'manager';
+  const isStaff = currentUser.role === 'staff';
+  const canManageCampaigns = isAdmin || isManager;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif]">
@@ -136,8 +143,8 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24 md:pb-8">
-          {/* ADMIN: DASHBOARD */}
-          {isAdmin && activeTab === 'dashboard' && (
+          {/* DASHBOARD (Admin & Trưởng/Phó phòng) */}
+          {canManageCampaigns && activeTab === 'dashboard' && (
             <AdminDashboard
               campaigns={campaigns}
               customers={customers}
@@ -152,7 +159,7 @@ export default function App() {
             />
           )}
 
-          {/* CAMPAIGN LIST / CAMPAIGN DETAIL */}
+          {/* CAMPAIGN LIST / CAMPAIGN DETAIL (Admin & Trưởng/Phó phòng manage, Staff views assigned) */}
           {activeTab === 'campaigns' && (
             <>
               {selectedCampaignId ? (
@@ -164,7 +171,13 @@ export default function App() {
                   callRecords={callRecords}
                   staffUsers={staffUsers}
                   activityLogs={activityLogs}
+                  currentUser={currentUser}
                   onBack={() => setSelectedCampaignId(null)}
+                  onDeleteCampaign={() => {
+                    setSelectedCampaignId(null);
+                    loadData();
+                  }}
+                  onCampaignUpdated={loadData}
                   onUpdateCampaignStatus={(status) => {
                     const cmp = campaigns.find((c) => c.id === selectedCampaignId);
                     if (cmp) {
@@ -178,28 +191,31 @@ export default function App() {
                   campaigns={campaigns}
                   customers={customers}
                   callRecords={callRecords}
-                  isAdmin={isAdmin}
+                  isAdmin={canManageCampaigns}
+                  currentUser={currentUser}
                   onCreateCampaign={() => setIsCreateCampaignOpen(true)}
                   onViewCampaignDetail={(cmpId) => setSelectedCampaignId(cmpId)}
+                  onDataUpdated={loadData}
                 />
               )}
             </>
           )}
 
-          {/* STAFF: DIRECT CALLING WORKFLOW */}
-          {!isAdmin && activeTab === 'staff_call' && (
+          {/* STAFF: DIRECT CALLING WORKFLOW (Chỉ nhân viên tiếp nhận & gọi điện) */}
+          {(isStaff || activeTab === 'staff_call') && activeTab === 'staff_call' && (
             <StaffCallingView
               currentUser={currentUser}
               campaigns={campaigns}
               customers={customers}
               assignments={assignments}
               callRecords={callRecords}
+              initialCustomerId={callingCustomerId}
               onDataUpdated={loadData}
               onViewCallbacks={() => setActiveTab('callbacks')}
             />
           )}
 
-          {/* STAFF: ASSIGNED CUSTOMERS LIST */}
+          {/* CUSTOMERS LIST (Staff xem khách hàng được phân công; Admin/Lãnh đạo xem toàn bộ KH chi nhánh) */}
           {activeTab === 'customers' && (
             <StaffCustomerList
               currentUser={currentUser}
@@ -225,22 +241,24 @@ export default function App() {
             />
           )}
 
-          {/* REPORTS / EXCEL EXPORT (Admin) */}
-          {isAdmin && activeTab === 'reports' && (
+          {/* REPORTS / EXCEL EXPORT (Admin & Trưởng/Phó phòng) */}
+          {canManageCampaigns && activeTab === 'reports' && (
             <CampaignList
               campaigns={campaigns}
               customers={customers}
               callRecords={callRecords}
-              isAdmin={isAdmin}
+              isAdmin={canManageCampaigns}
+              currentUser={currentUser}
               onCreateCampaign={() => setIsCreateCampaignOpen(true)}
               onViewCampaignDetail={(cmpId) => {
                 setSelectedCampaignId(cmpId);
                 setActiveTab('campaigns');
               }}
+              onDataUpdated={loadData}
             />
           )}
 
-          {/* USER MANAGEMENT & RBAC (Admin) */}
+          {/* USER MANAGEMENT & RBAC (CHỈ DÀNH RIÊNG CHO ADMIN TOÀN QUYỀN) */}
           {isAdmin && activeTab === 'users' && (
             <UserManagement
               currentUser={currentUser}
@@ -250,8 +268,8 @@ export default function App() {
             />
           )}
 
-          {/* ACTIVITY LOGS (Admin) */}
-          {isAdmin && activeTab === 'logs' && (
+          {/* ACTIVITY LOGS (Admin & Trưởng/Phó phòng) */}
+          {canManageCampaigns && activeTab === 'logs' && (
             <ActivityLogView activityLogs={activityLogs} />
           )}
         </main>

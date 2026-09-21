@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Campaign, Customer, Assignment, CallRecord, User, ActivityLog, CallStatus, CallResult } from '../types';
 import { computeCampaignStats, computeStaffProgress } from '../services/statsService';
 import { exportCampaignToExcel, ExportReportItem } from '../services/excelService';
+import { db } from '../services/storage';
 import { ProgressBar } from '../components/ProgressBar';
 import { CallStatusBadge, CallResultBadge, CampaignStatusBadge } from '../components/StatusBadge';
+import { EditCampaignModal } from './EditCampaignModal';
 import {
   ArrowLeft,
   Calendar,
@@ -20,6 +22,10 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   ChevronRight,
+  Pencil,
+  Trash2,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 
 interface CampaignDetailViewProps {
@@ -30,8 +36,11 @@ interface CampaignDetailViewProps {
   callRecords: CallRecord[];
   staffUsers: User[];
   activityLogs: ActivityLog[];
+  currentUser?: User;
   onBack: () => void;
   onUpdateCampaignStatus?: (status: Campaign['status']) => void;
+  onDeleteCampaign?: (campaignId: string) => void;
+  onCampaignUpdated?: () => void;
 }
 
 export function CampaignDetailView({
@@ -42,8 +51,11 @@ export function CampaignDetailView({
   callRecords,
   staffUsers,
   activityLogs,
+  currentUser,
   onBack,
   onUpdateCampaignStatus,
+  onDeleteCampaign,
+  onCampaignUpdated,
 }: CampaignDetailViewProps) {
   const campaign = campaigns.find((c) => c.id === campaignId);
 
@@ -56,6 +68,11 @@ export function CampaignDetailView({
 
   // Active sub-tab
   const [activeTab, setActiveTab] = useState<'customers' | 'staff' | 'logs'>('customers');
+
+  // Edit & Delete modal states
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Export Modal state
   const [showExportModal, setShowExportModal] = useState(false);
@@ -194,6 +211,24 @@ export function CampaignDetailView({
     setShowExportModal(false);
   };
 
+  const canManage = currentUser?.role === 'admin' || currentUser?.role === 'manager';
+
+  const handleDeleteCampaign = () => {
+    setIsDeleting(true);
+    try {
+      db.deleteCampaign(campaign.id, currentUser);
+      setIsDeleteConfirmOpen(false);
+      if (onDeleteCampaign) {
+        onDeleteCampaign(campaign.id);
+      } else {
+        onBack();
+      }
+    } catch (err: any) {
+      alert('Lỗi khi xóa chiến dịch: ' + (err.message || err));
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Navigation & Actions Bar */}
@@ -207,7 +242,31 @@ export function CampaignDetailView({
           <span>Quay lại danh sách chiến dịch</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {canManage && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-colors"
+                title="Lãnh đạo phòng / Quản trị viên chỉnh sửa thông tin chiến dịch"
+              >
+                <Pencil className="w-3.5 h-3.5 text-amber-700" />
+                <span>Chỉnh sửa</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsDeleteConfirmOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-xs font-bold transition-colors"
+                title="Lãnh đạo phòng / Quản trị viên xóa chiến dịch"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                <span>Xóa</span>
+              </button>
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => setShowExportModal(true)}
@@ -764,6 +823,77 @@ export function CampaignDetailView({
                 <Download className="w-3.5 h-3.5" />
                 <span>TẢI FILE EXCEL (.XLSX)</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT CAMPAIGN MODAL */}
+      {isEditModalOpen && currentUser && (
+        <EditCampaignModal
+          campaign={campaign}
+          currentUser={currentUser}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={(updated) => {
+            setIsEditModalOpen(false);
+            if (onCampaignUpdated) {
+              onCampaignUpdated();
+            }
+          }}
+        />
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Xác nhận xóa chiến dịch
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Hành động này dành cho Quản trị viên và Lãnh đạo phòng DVKH
+                </p>
+              </div>
+
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-left text-xs text-rose-900 space-y-1.5">
+                <div className="font-bold flex items-center gap-1 text-rose-800">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Cảnh báo dữ liệu quan trọng:</span>
+                </div>
+                <p>
+                  Bạn đang chuẩn bị xóa chiến dịch <strong>"{campaign.name}"</strong>.
+                </p>
+                <p>
+                  Toàn bộ danh sách <strong>{campaignCustomers.length} khách hàng</strong> và <strong>{campaignRecords.length} lịch sử cuộc gọi</strong> liên quan sẽ bị xóa hoàn toàn khỏi hệ thống.
+                </p>
+                <p className="font-bold text-rose-700">Thao tác này không thể hoàn tác!</p>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDeleteCampaign}
+                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-900/10 transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{isDeleting ? 'Đang xóa...' : 'Đồng ý xóa chiến dịch'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

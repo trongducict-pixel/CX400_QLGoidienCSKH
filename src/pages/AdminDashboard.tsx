@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Campaign, Customer, CallRecord, User } from '../types';
 import { computeCampaignStats } from '../services/statsService';
 import { ProgressBar } from '../components/ProgressBar';
 import { CampaignStatusBadge } from '../components/StatusBadge';
+import { db } from '../services/storage';
+import {
+  testGoogleSheetsWebhook,
+  syncAllCallRecordsToGoogleSheets,
+  DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL,
+} from '../services/googleSheetsService';
 import {
   Megaphone,
   Users,
@@ -15,6 +21,10 @@ import {
   ArrowRight,
   TrendingUp,
   FileSpreadsheet,
+  CheckCircle2,
+  RefreshCw,
+  ExternalLink,
+  Link2,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -74,6 +84,46 @@ export function AdminDashboard({
     (c) => c.status === 'in_progress' && c.endDate < new Date().toISOString().slice(0, 10)
   );
 
+  // Google Sheets sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const sheetsConfig = db.getGoogleSheetsConfig();
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setSyncNotice(null);
+    try {
+      const res = await testGoogleSheetsWebhook();
+      setSyncNotice({
+        type: res.success ? 'success' : 'error',
+        message: res.message || (res.success ? 'Kết nối tới Google Sheets Webhook thành công!' : 'Lỗi kết nối Webhook.'),
+      });
+    } catch (e: any) {
+      setSyncNotice({ type: 'error', message: e?.message || 'Lỗi kiểm tra kết nối Webhook.' });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    if (!window.confirm(`Bạn có muốn đồng bộ toàn bộ ${callRecords.length} lượt gọi lên Google Sheets mặc định không?`)) return;
+    setIsSyncing(true);
+    setSyncNotice(null);
+    try {
+      const res = await syncAllCallRecordsToGoogleSheets();
+      setSyncNotice({
+        type: res.success ? 'success' : 'error',
+        message: res.message,
+      });
+    } catch (e: any) {
+      setSyncNotice({ type: 'error', message: e?.message || 'Lỗi khi đồng bộ Google Sheets.' });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Header */}
@@ -100,6 +150,75 @@ export function AdminDashboard({
             <span>+ TẠO CHIẾN DỊCH</span>
           </button>
         </div>
+      </div>
+
+      {/* Google Sheets Default Integration Card */}
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-200 p-5 rounded-2xl shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Google Sheets Mặc định đã kích hoạt
+              </span>
+              <span className="text-[11px] text-slate-500">
+                (Tự động đồng bộ kết quả cuộc gọi theo thời gian thực)
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-700 break-all">
+              <Link2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span className="font-semibold text-slate-800 truncate max-w-xl">
+                {sheetsConfig.webhookUrl || DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL}
+              </span>
+            </div>
+            {sheetsConfig.lastSyncedAt && (
+              <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                Lần đồng bộ gần nhất: {new Date(sheetsConfig.lastSyncedAt).toLocaleString('vi-VN')}
+                {sheetsConfig.totalSyncedRecords ? ` • Tổng ${sheetsConfig.totalSyncedRecords} bản ghi` : ''}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleTestConnection}
+              disabled={isTesting}
+              className="px-3.5 py-2 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin' : ''}`} />
+              <span>{isTesting ? 'Đang kiểm tra...' : 'Kiểm tra kết nối'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSyncAll}
+              disabled={isSyncing}
+              className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ tất cả dữ liệu'}</span>
+            </button>
+          </div>
+        </div>
+
+        {syncNotice && (
+          <div
+            className={`mt-3 p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
+              syncNotice.type === 'success'
+                ? 'bg-emerald-100/80 text-emerald-900 border border-emerald-300'
+                : 'bg-rose-100/80 text-rose-900 border border-rose-300'
+            }`}
+          >
+            {syncNotice.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-rose-700 shrink-0" />
+            )}
+            <span>{syncNotice.message}</span>
+          </div>
+        )}
       </div>
 
       {/* Warning for expired campaigns as specified in Section XXXI */}

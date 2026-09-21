@@ -10,7 +10,7 @@ interface LoginViewProps {
 
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('123456');
+  const [password, setPassword] = useState('123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +41,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
 
   const handleQuickFill = (demoUsername: string) => {
     setUsername(demoUsername);
-    setPassword('123456');
+    setPassword('123');
     setError(null);
     const user = db.getUserByUsername(demoUsername);
     if (user) {
@@ -91,7 +91,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin hoặc cb01, cb02..."
+                  placeholder="admin hoặc pthiha, dandq, thuth, vunm..."
                   className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#BE1E2D] focus:border-transparent transition-all"
                 />
               </div>
@@ -110,7 +110,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mật khẩu (mặc định: 123456)"
+                  placeholder="Mật khẩu mặc định: 123"
                   className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#BE1E2D] focus:border-transparent transition-all"
                 />
               </div>
@@ -128,61 +128,87 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             </div>
           </form>
 
-          {/* Quick Demo Test Accounts Box as explicitly requested in Section V */}
+          {/* Quick Demo Test Accounts Box as explicitly requested */}
           <div className="mt-6 pt-5 border-t border-slate-200">
             <div className="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">
-              Tài khoản mẫu để kiểm thử nhanh:
+              Tài khoản mẫu để kiểm thử nhanh (Mật khẩu mặc định: 123):
             </div>
 
             <div className="space-y-2">
-              <div className="bg-red-50/80 p-2.5 rounded-xl border border-red-100 flex items-center justify-between">
+              <div className="bg-purple-50/80 p-2.5 rounded-xl border border-purple-100 flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-red-900 flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-red-700" />
-                    <span>Lãnh đạo Phòng DVKH</span>
+                  <div className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-purple-700" />
+                    <span>Quản trị viên hệ thống (Admin)</span>
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    Username: <code className="font-mono font-bold text-slate-800">admin</code> | Mật khẩu: <code className="font-mono">123456</code>
+                    Username: <code className="font-mono font-bold text-slate-800">admin</code> | Mật khẩu: <code className="font-mono font-bold text-red-600">123</code>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleQuickFill('admin')}
-                  className="px-2.5 py-1.5 bg-[#BE1E2D] hover:bg-[#a61825] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                  className="px-2.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
                 >
-                  Đăng nhập ngay
+                  Đăng nhập
                 </button>
               </div>
 
               <div className="bg-blue-50/80 p-2.5 rounded-xl border border-blue-100 flex items-center justify-between">
                 <div>
                   <div className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                    <UserIcon className="w-3.5 h-3.5 text-blue-700" />
-                    <span>Cán bộ CSKH (cb01 - Nguyễn Văn A)</span>
+                    <Shield className="w-3.5 h-3.5 text-blue-700" />
+                    <span>Trưởng phòng DVKH (Phạm Thị Hà)</span>
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    Username: <code className="font-mono font-bold text-slate-800">cb01</code> | Mật khẩu: <code className="font-mono">123456</code>
+                    Username: <code className="font-mono font-bold text-slate-800">pthiha</code> | Mật khẩu: <code className="font-mono font-bold text-red-600">123</code>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleQuickFill('cb01')}
+                  onClick={() => handleQuickFill('pthiha')}
                   className="px-2.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
                 >
-                  Đăng nhập ngay
+                  Đăng nhập
                 </button>
               </div>
 
-              <div className="flex items-center gap-1 text-[11px] text-slate-500 justify-center pt-1">
+              <div className="bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-100 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                    <UserIcon className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>GDV độc lập / Cán bộ CSKH (Tạ Hà Thu)</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Username: <code className="font-mono font-bold text-slate-800">thuth</code> | Mật khẩu: <code className="font-mono font-bold text-red-600">123</code>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleQuickFill('thuth')}
+                  className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                >
+                  Đăng nhập
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 justify-center pt-2">
                 <span>Cán bộ khác:</span>
-                {['cb02', 'cb03', 'cb04', 'cb05'].map((cb) => (
+                {[
+                  { u: 'dandq', label: 'Đinh Q. Dân (Phó phòng)' },
+                  { u: 'ttquy', label: 'Trương T. Quý' },
+                  { u: 'vunm', label: 'Nguyễn M. Vũ (Thủ quỹ)' },
+                  { u: 'ducnt4', label: 'Nguyễn T. Đức (IT)' },
+                  { u: 'yenvth', label: 'Vũ T. H. Yến' },
+                ].map((item) => (
                   <button
-                    key={cb}
+                    key={item.u}
                     type="button"
-                    onClick={() => handleQuickFill(cb)}
-                    className="font-mono font-bold text-blue-700 hover:underline px-1"
+                    onClick={() => handleQuickFill(item.u)}
+                    className="font-mono text-blue-700 hover:underline px-1.5 py-0.5 bg-slate-100 rounded text-[10px]"
+                    title={`Đăng nhập nhanh với tài khoản ${item.u} (Mật khẩu: 123)`}
                   >
-                    {cb}
+                    {item.u}
                   </button>
                 ))}
               </div>

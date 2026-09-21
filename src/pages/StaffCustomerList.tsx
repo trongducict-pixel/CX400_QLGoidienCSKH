@@ -32,21 +32,23 @@ export function StaffCustomerList({
   const [statusFilter, setStatusFilter] = useState<'all' | CallStatus | 'callback'>('all');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>('all');
 
-  // Filter assignments strictly for this staff member (Section III & XXIV security rule)
-  const myAssignments = assignments.filter((a) => a.staffId === currentUser.id);
-  const myCustomerIds = new Set(myAssignments.map((a) => a.customerId));
-  const myCampaignIds = new Set(myAssignments.map((a) => a.campaignId));
+  const isStaff = currentUser.role === 'staff';
 
-  const myCampaigns = campaigns.filter((c) => myCampaignIds.has(c.id));
+  // Filter assignments strictly for staff, or show all for admin/manager
+  const myAssignments = isStaff ? assignments.filter((a) => a.staffId === currentUser.id) : assignments;
+  const myCustomerIds = isStaff ? new Set(myAssignments.map((a) => a.customerId)) : null;
+  const myCampaigns = isStaff
+    ? campaigns.filter((c) => new Set(myAssignments.map((a) => a.campaignId)).has(c.id))
+    : campaigns;
 
   // Map of call records
   const recordMap = new Map<string, CallRecord>();
   callRecords.forEach((r) => recordMap.set(r.customerId, r));
 
-  // Filter customers assigned to this staff
+  // Filter customers
   const filteredCustomers = customers.filter((cust) => {
-    // Security check: Must be assigned to this staff
-    if (!myCustomerIds.has(cust.id)) return false;
+    // If staff, only show assigned customers
+    if (isStaff && myCustomerIds && !myCustomerIds.has(cust.id)) return false;
 
     // Campaign filter
     if (selectedCampaignId !== 'all' && cust.campaignId !== selectedCampaignId) {
@@ -150,9 +152,88 @@ export function StaffCustomerList({
         </div>
       </div>
 
-      {/* Customers Table (Section XVII) */}
+      {/* Customers Table (Desktop) & Cards (Mobile) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* MOBILE CARDS VIEW (md:hidden) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredCustomers.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400">
+              Không tìm thấy khách hàng nào theo điều kiện tìm kiếm.
+            </div>
+          ) : (
+            filteredCustomers.map((cust, idx) => {
+              const record = recordMap.get(cust.id);
+              const status = record?.status || 'not_contacted';
+
+              return (
+                <div key={cust.id} className="p-3.5 space-y-2.5 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {cust.stt || idx + 1}
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                          {cust.fullName}
+                        </h4>
+                        <a
+                          href={`tel:${cust.phone}`}
+                          className="text-xs font-mono font-bold text-[#BE1E2D] hover:underline"
+                        >
+                          {cust.phone}
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      <CallStatusBadge status={status} />
+                    </div>
+                  </div>
+
+                  {/* Result & Appointment if any */}
+                  {(record?.result || record?.followUpDate || record?.note) && (
+                    <div className="bg-slate-50 p-2.5 rounded-xl text-xs space-y-1 border border-slate-100">
+                      {record?.result && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-slate-400 font-semibold">Kết quả:</span>
+                          <CallResultBadge result={record.result} />
+                        </div>
+                      )}
+
+                      {record?.followUpDate && (
+                        <div className="flex items-center gap-1 text-purple-700 font-bold text-[11px]">
+                          <Bell className="w-3 h-3 text-purple-600" />
+                          <span>Hẹn gọi lại: {record.followUpTime || ''} {record.followUpDate}</span>
+                        </div>
+                      )}
+
+                      {record?.note && (
+                        <div className="text-[11px] text-slate-600 italic">
+                          "{record.note}"
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 1-Tap Call Button on Mobile */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => onCallCustomer(cust.id, cust.campaignId)}
+                      className="w-full py-2.5 px-3 bg-emerald-600 active:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center justify-center gap-2 transition-colors active:scale-98"
+                    >
+                      <Phone className="w-4 h-4 fill-current" />
+                      <span>GỌI KHÁCH HÀNG NÀY</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* DESKTOP TABLE VIEW (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 uppercase font-bold text-[11px]">
               <tr>

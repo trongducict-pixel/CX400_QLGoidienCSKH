@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Campaign, Customer, CallRecord, CampaignStatus } from '../types';
+import { Campaign, Customer, CallRecord, CampaignStatus, User } from '../types';
 import { computeCampaignStats } from '../services/statsService';
 import { CampaignStatusBadge } from '../components/StatusBadge';
 import { ProgressBar } from '../components/ProgressBar';
+import { db } from '../services/storage';
+import { EditCampaignModal } from './EditCampaignModal';
 import {
   PlusCircle,
   Search,
@@ -12,6 +14,8 @@ import {
   Users,
   AlertTriangle,
   FileSpreadsheet,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 
 interface CampaignListProps {
@@ -19,8 +23,10 @@ interface CampaignListProps {
   customers: Customer[];
   callRecords: CallRecord[];
   isAdmin: boolean;
+  currentUser?: User;
   onCreateCampaign: () => void;
   onViewCampaignDetail: (campaignId: string) => void;
+  onDataUpdated?: () => void;
 }
 
 export function CampaignList({
@@ -28,11 +34,16 @@ export function CampaignList({
   customers,
   callRecords,
   isAdmin,
+  currentUser,
   onCreateCampaign,
   onViewCampaignDetail,
+  onDataUpdated,
 }: CampaignListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | CampaignStatus>('all');
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filtered campaigns
   const filteredCampaigns = campaigns.filter((cmp) => {
@@ -213,17 +224,48 @@ export function CampaignList({
                       </td>
 
                       <td className="px-4 py-4 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewCampaignDetail(cmp.id);
-                          }}
-                          className="px-3 py-1.5 bg-slate-100 hover:bg-[#BE1E2D] hover:text-white text-slate-700 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1"
-                        >
-                          <span>Xem</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewCampaignDetail(cmp.id);
+                            }}
+                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-[#BE1E2D] hover:text-white text-slate-700 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1"
+                            title="Xem chi tiết chiến dịch"
+                          >
+                            <span>Xem</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+
+                          {isAdmin && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingCampaign(cmp);
+                                }}
+                                className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold transition-colors inline-flex items-center"
+                                title="Chỉnh sửa chiến dịch"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeletingCampaign(cmp);
+                                }}
+                                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors inline-flex items-center"
+                                title="Xóa chiến dịch"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -233,6 +275,86 @@ export function CampaignList({
           </table>
         </div>
       </div>
+
+      {/* EDIT CAMPAIGN MODAL */}
+      {editingCampaign && currentUser && (
+        <EditCampaignModal
+          campaign={editingCampaign}
+          currentUser={currentUser}
+          onClose={() => setEditingCampaign(null)}
+          onSuccess={() => {
+            setEditingCampaign(null);
+            if (onDataUpdated) onDataUpdated();
+          }}
+        />
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deletingCampaign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Xác nhận xóa chiến dịch
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Dành cho Lãnh đạo Phòng DVKH và Quản trị viên
+                </p>
+              </div>
+
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-left text-xs text-rose-900 space-y-1.5">
+                <div className="font-bold flex items-center gap-1 text-rose-800">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Cảnh báo dữ liệu quan trọng:</span>
+                </div>
+                <p>
+                  Bạn có chắc chắn muốn xóa chiến dịch <strong>"{deletingCampaign.name}"</strong>?
+                </p>
+                <p>
+                  Toàn bộ danh sách khách hàng và lịch sử các cuộc gọi thuộc chiến dịch này sẽ bị xóa khỏi hệ thống.
+                </p>
+                <p className="font-bold text-rose-700">Thao tác này không thể hoàn tác!</p>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setDeletingCampaign(null)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => {
+                    setIsDeleting(true);
+                    try {
+                      db.deleteCampaign(deletingCampaign.id, currentUser);
+                      setDeletingCampaign(null);
+                      if (onDataUpdated) onDataUpdated();
+                    } catch (err: any) {
+                      alert('Lỗi khi xóa: ' + (err.message || err));
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }}
+                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-900/10 transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{isDeleting ? 'Đang xóa...' : 'Đồng ý xóa'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

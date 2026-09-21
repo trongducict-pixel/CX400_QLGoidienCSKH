@@ -44,17 +44,19 @@ export function UserManagement({
   // Reset Password Modal states
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [targetResetUser, setTargetResetUser] = useState<User | null>(null);
-  const [newPassword, setNewPassword] = useState('123456');
+  const [newPassword, setNewPassword] = useState('123');
 
   // Form fields for create/edit
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState('Phòng DVKH');
   const [title, setTitle] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<UserRole>('staff');
   const [active, setActive] = useState(true);
-  const [formPassword, setFormPassword] = useState('');
+  const [formPassword, setFormPassword] = useState('123');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
@@ -69,6 +71,8 @@ export function UserManagement({
     const matchesSearch =
       u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.department || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.phone || '').includes(searchTerm.trim());
@@ -84,8 +88,10 @@ export function UserManagement({
     setIsNewUser(false);
     setFullName(user.fullName);
     setUsername(user.username);
+    setEmployeeId(user.employeeId || '');
+    setDepartment(user.department || 'Phòng DVKH');
     setTitle(user.title || '');
-    setEmail(user.email || `${user.username}@vietinbank.vn`);
+    setEmail(user.email || `${user.username.toUpperCase()}@VIETINBANK.VN`);
     setPhone(user.phone || '');
     setRole(user.role);
     setActive(user.active);
@@ -100,12 +106,14 @@ export function UserManagement({
     setIsNewUser(true);
     setFullName('');
     setUsername('');
-    setTitle('Cán bộ CSKH');
+    setEmployeeId('');
+    setDepartment('Phòng DVKH');
+    setTitle('GDV độc lập');
     setEmail('');
     setPhone('');
     setRole('staff');
     setActive(true);
-    setFormPassword('123456');
+    setFormPassword('123');
     setErrorMsg(null);
     setIsEditModalOpen(true);
   };
@@ -132,13 +140,15 @@ export function UserManagement({
     const userToSave: User = {
       id: editingUser?.id || `u-${trimmedUsername}-${Date.now()}`,
       username: trimmedUsername,
+      employeeId: employeeId.trim() || undefined,
+      department: department.trim() || 'Phòng DVKH',
       fullName: fullName.trim(),
       title: title.trim() || undefined,
-      email: email.trim() || `${trimmedUsername}@vietinbank.vn`,
+      email: email.trim() || `${trimmedUsername.toUpperCase()}@VIETINBANK.VN`,
       phone: phone.trim() || undefined,
       role,
       active,
-      password: formPassword.trim() || editingUser?.password || '123456',
+      password: formPassword.trim() || editingUser?.password || '123',
     };
 
     db.saveUser(userToSave, currentUser);
@@ -155,7 +165,7 @@ export function UserManagement({
   // Open Reset Password modal
   const handleOpenResetPassword = (user: User) => {
     setTargetResetUser(user);
-    setNewPassword('123456');
+    setNewPassword('123');
     setIsResetPasswordOpen(true);
   };
 
@@ -210,7 +220,29 @@ export function UserManagement({
   const totalUsers = users.length;
   const activeCount = users.filter((u) => u.active).length;
   const adminCount = users.filter((u) => u.role === 'admin').length;
+  const managerCount = users.filter((u) => u.role === 'manager').length;
   const staffCount = users.filter((u) => u.role === 'staff').length;
+
+  // Access check: Only Admin can access User Management
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="max-w-2xl mx-auto my-12 p-8 bg-white border border-slate-200 rounded-2xl text-center shadow-sm">
+        <div className="w-16 h-16 bg-red-100 text-[#BE1E2D] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Shield className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-black text-slate-900 mb-2">Quyền truy cập bị hạn chế</h2>
+        <p className="text-sm text-slate-600 mb-6">
+          Theo quy định phân quyền, chức năng <strong>Quản trị người dùng & Phân quyền cán bộ</strong> chỉ dành riêng cho tài khoản <strong>Quản trị viên (Admin)</strong>.
+          Lãnh đạo phòng (Trưởng/Phó phòng) chỉ quản lý chiến dịch và xem báo cáo.
+        </p>
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 inline-block text-left">
+          <div className="font-bold text-slate-700 mb-1">Tài khoản hiện tại của bạn:</div>
+          <div>Họ và tên: <span className="font-semibold text-slate-900">{currentUser.fullName}</span></div>
+          <div>Vai trò: <span className="font-bold text-blue-600">Trưởng/Phó phòng (Manager)</span></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -226,7 +258,7 @@ export function UserManagement({
                 Quản trị người dùng & Phân quyền cán bộ
               </h2>
               <p className="text-xs sm:text-sm text-slate-500">
-                Quản lý danh sách nhân sự Phòng DVKH, phân quyền Lãnh đạo / Cán bộ, chỉnh sửa thông tin & reset mật khẩu
+                Phân quyền 3 nhóm: <strong>Admin (Toàn quyền)</strong>, <strong>Trưởng/Phó phòng (Quản lý chiến dịch, Báo cáo)</strong>, <strong>Nhân viên (Tiếp nhận & Gọi điện)</strong>
               </p>
             </div>
           </div>
@@ -250,30 +282,30 @@ export function UserManagement({
         </div>
       )}
 
-      {/* Metric Counters */}
+      {/* Metric Counters (4 cards covering 3 roles) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs">
           <div className="text-xs font-semibold text-slate-500">Tổng nhân sự</div>
           <div className="text-2xl font-black text-slate-900 mt-1">{totalUsers}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Tài khoản trên hệ thống</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">{activeCount} đang hoạt động</div>
         </div>
 
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs">
-          <div className="text-xs font-semibold text-slate-500">Lãnh đạo phòng</div>
-          <div className="text-2xl font-black text-[#BE1E2D] mt-1">{adminCount}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Quyền Quản trị Admin</div>
+        <div className="p-4 bg-white border border-purple-200 rounded-2xl shadow-2xs bg-purple-50/20">
+          <div className="text-xs font-semibold text-purple-700">Quản trị viên (Admin)</div>
+          <div className="text-2xl font-black text-purple-700 mt-1">{adminCount}</div>
+          <div className="text-[11px] text-purple-500 mt-0.5">Toàn quyền hệ thống</div>
         </div>
 
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs">
-          <div className="text-xs font-semibold text-slate-500">Cán bộ CSKH</div>
-          <div className="text-2xl font-black text-[#003B70] mt-1">{staffCount}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Thực hiện gọi điện</div>
+        <div className="p-4 bg-white border border-blue-200 rounded-2xl shadow-2xs bg-blue-50/20">
+          <div className="text-xs font-semibold text-blue-700">Trưởng / Phó phòng</div>
+          <div className="text-2xl font-black text-blue-700 mt-1">{managerCount}</div>
+          <div className="text-[11px] text-blue-500 mt-0.5">Chiến dịch & Báo cáo</div>
         </div>
 
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs">
-          <div className="text-xs font-semibold text-slate-500">Đang hoạt động</div>
-          <div className="text-2xl font-black text-emerald-600 mt-1">{activeCount}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Sẵn sàng phân công</div>
+        <div className="p-4 bg-white border border-emerald-200 rounded-2xl shadow-2xs bg-emerald-50/20">
+          <div className="text-xs font-semibold text-emerald-700">Nhân viên CSKH</div>
+          <div className="text-2xl font-black text-emerald-700 mt-1">{staffCount}</div>
+          <div className="text-[11px] text-emerald-500 mt-0.5">Tiếp nhận & Gọi điện</div>
         </div>
       </div>
 
@@ -293,12 +325,13 @@ export function UserManagement({
           />
         </div>
 
-        {/* Role Filter Pills */}
+        {/* Role Filter Pills for 3 Roles */}
         <div className="flex items-center gap-1 overflow-x-auto">
           {[
             { id: 'all', label: 'Tất cả' },
-            { id: 'admin', label: 'Lãnh đạo (Admin)' },
-            { id: 'staff', label: 'Cán bộ (Staff)' },
+            { id: 'admin', label: 'Admin (Toàn quyền)' },
+            { id: 'manager', label: 'Trưởng/Phó phòng' },
+            { id: 'staff', label: 'Nhân viên CSKH' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -323,8 +356,9 @@ export function UserManagement({
             <thead className="bg-slate-50 text-slate-600 uppercase font-bold text-[11px]">
               <tr>
                 <th className="px-4 py-3.5 w-12 text-center">STT</th>
-                <th className="px-5 py-3.5">Họ và tên & Chức danh</th>
-                <th className="px-4 py-3.5">Mã CB / Tên đăng nhập</th>
+                <th className="px-5 py-3.5">Họ và tên & Chức vụ</th>
+                <th className="px-4 py-3.5">Mã NV / Username</th>
+                <th className="px-4 py-3.5">Phòng ban</th>
                 <th className="px-4 py-3.5">Liên hệ</th>
                 <th className="px-4 py-3.5 text-center">Phân quyền</th>
                 <th className="px-4 py-3.5 text-center">Đang phụ trách</th>
@@ -335,7 +369,7 @@ export function UserManagement({
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
                     Không tìm thấy người dùng nào phù hợp.
                   </td>
                 </tr>
@@ -359,38 +393,52 @@ export function UserManagement({
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-500">{user.title || 'Cán bộ'}</div>
+                        <div className="text-[11px] text-slate-600 font-semibold">{user.title || 'Cán bộ CSKH'}</div>
                       </td>
 
-                      <td className="px-4 py-4 font-mono font-bold text-slate-800">
-                        <span className="px-2 py-1 bg-slate-100 rounded-md text-xs">
+                      <td className="px-4 py-4">
+                        <div className="font-mono font-bold text-slate-900 text-xs">
                           {user.username}
-                        </span>
+                        </div>
+                        {user.employeeId && (
+                          <div className="text-[10px] font-mono text-slate-400">
+                            Mã: {user.employeeId}
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-4 text-xs font-semibold text-slate-600">
+                        {user.department || 'Phòng DVKH'}
                       </td>
 
                       <td className="px-4 py-4 text-[11px] space-y-0.5">
-                        <div className="flex items-center gap-1 text-slate-600">
+                        <div className="flex items-center gap-1 text-slate-700 font-medium">
                           <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{user.phone || 'Chưa cập nhật'}</span>
+                          <span>{user.phone || 'Chưa có SĐT'}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-slate-400">
+                        <div className="flex items-center gap-1 text-slate-500">
                           <Mail className="w-3 h-3 text-slate-400" />
-                          <span className="truncate max-w-[150px]">
-                            {user.email || `${user.username}@vietinbank.vn`}
+                          <span className="truncate max-w-[170px] uppercase font-mono text-[10px]">
+                            {user.email || `${user.username.toUpperCase()}@VIETINBANK.VN`}
                           </span>
                         </div>
                       </td>
 
                       <td className="px-4 py-4 text-center whitespace-nowrap">
                         {user.role === 'admin' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-50 text-[#BE1E2D] border border-red-200">
-                            <Shield className="w-3 h-3" />
-                            Lãnh đạo (Admin)
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                            <Shield className="w-3 h-3 text-purple-600" />
+                            Admin (Toàn quyền)
+                          </span>
+                        ) : user.role === 'manager' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-[#003B70] border border-blue-200">
+                            <Shield className="w-3 h-3 text-blue-600" />
+                            Trưởng/Phó phòng
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-[#003B70] border border-blue-200">
-                            <UserCheck className="w-3 h-3" />
-                            Cán bộ (Staff)
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <UserCheck className="w-3 h-3 text-emerald-600" />
+                            Nhân viên CSKH
                           </span>
                         )}
                       </td>
@@ -528,13 +576,41 @@ export function UserManagement({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-700 font-bold uppercase tracking-wider mb-1">
-                    Chức danh
+                    Mã nhân viên (Hệ thống VietinBank)
+                  </label>
+                  <input
+                    type="text"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    placeholder="Ví dụ: 00028271"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-[#BE1E2D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold uppercase tracking-wider mb-1">
+                    Phòng ban
+                  </label>
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="Ví dụ: Phòng DVKH"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#BE1E2D]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-bold uppercase tracking-wider mb-1">
+                    Chức danh / Vị trí
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ví dụ: Cán bộ CSKH"
+                    placeholder="Ví dụ: GDV độc lập / Trưởng phòng"
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#BE1E2D]"
                   />
                 </div>
@@ -566,38 +642,17 @@ export function UserManagement({
                 />
               </div>
 
-              {/* Phân quyền vai trò (RBAC) */}
+              {/* Phân quyền vai trò (RBAC - 3 nhóm quyền) */}
               <div className="pt-2 border-t border-slate-100">
                 <label className="block text-slate-800 font-bold uppercase tracking-wider mb-2">
-                  Phân quyền vai trò (Role):
+                  Phân quyền 3 nhóm vai trò (Role):
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label
-                    className={`p-3 rounded-xl border cursor-pointer flex flex-col transition-all ${
-                      role === 'staff'
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
-                        : 'border-slate-200 bg-white text-slate-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="userRole"
-                        checked={role === 'staff'}
-                        onChange={() => setRole('staff')}
-                        className="text-blue-600 focus:ring-blue-500"
-                      />
-                      <span>Cán bộ CSKH (Staff)</span>
-                    </div>
-                    <span className="text-[11px] text-slate-500 mt-1 font-normal">
-                      Chỉ xem & gọi điện cho các khách hàng được phân công
-                    </span>
-                  </label>
-
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {/* ADMIN */}
                   <label
                     className={`p-3 rounded-xl border cursor-pointer flex flex-col transition-all ${
                       role === 'admin'
-                        ? 'border-red-600 bg-red-50/70 text-red-950 font-bold shadow-xs'
+                        ? 'border-purple-600 bg-purple-50/70 text-purple-950 font-bold shadow-xs'
                         : 'border-slate-200 bg-white text-slate-600'
                     }`}
                   >
@@ -607,12 +662,58 @@ export function UserManagement({
                         name="userRole"
                         checked={role === 'admin'}
                         onChange={() => setRole('admin')}
-                        className="text-red-600 focus:ring-red-500"
+                        className="text-purple-600 focus:ring-purple-500"
                       />
-                      <span>Lãnh đạo phòng (Admin)</span>
+                      <span className="text-xs">Quản trị viên (Admin)</span>
                     </div>
-                    <span className="text-[11px] text-slate-500 mt-1 font-normal">
-                      Toàn quyền tạo chiến dịch, phân công, báo cáo & phân quyền
+                    <span className="text-[10px] text-slate-500 mt-1 font-normal leading-tight">
+                      Toàn quyền: Quản trị người dùng, phân quyền, cấu hình Google Sheets & toàn bộ hệ thống
+                    </span>
+                  </label>
+
+                  {/* MANAGER */}
+                  <label
+                    className={`p-3 rounded-xl border cursor-pointer flex flex-col transition-all ${
+                      role === 'manager'
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                        : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="userRole"
+                        checked={role === 'manager'}
+                        onChange={() => setRole('manager')}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs">Trưởng/Phó phòng</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-1 font-normal leading-tight">
+                      Lãnh đạo phòng: Quản lý chiến dịch, phân công cán bộ, xem báo cáo & đôn đốc (không quản trị nhân sự)
+                    </span>
+                  </label>
+
+                  {/* STAFF */}
+                  <label
+                    className={`p-3 rounded-xl border cursor-pointer flex flex-col transition-all ${
+                      role === 'staff'
+                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 font-bold shadow-xs'
+                        : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="userRole"
+                        checked={role === 'staff'}
+                        onChange={() => setRole('staff')}
+                        className="text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-xs">Nhân viên CSKH</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-1 font-normal leading-tight">
+                      Cán bộ CSKH: Chỉ tiếp nhận danh sách được giao, gọi điện và cập nhật kết quả cuộc gọi
                     </span>
                   </label>
                 </div>
@@ -644,7 +745,7 @@ export function UserManagement({
                     type="text"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
-                    placeholder="Mặc định: 123456"
+                    placeholder="Mặc định: 123"
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-[#BE1E2D]"
                   />
                 </div>
@@ -698,7 +799,7 @@ export function UserManagement({
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-amber-500"
                 />
                 <span className="text-[11px] text-slate-400 block mt-1">
-                  Khuyến nghị: 123456 hoặc cấp theo quy chuẩn bảo mật chi nhánh
+                  Khuyến nghị: 123 (mặc định toàn chi nhánh)
                 </span>
               </div>
             </div>

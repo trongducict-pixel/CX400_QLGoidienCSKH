@@ -37,8 +37,10 @@ export function Sidebar({
   callbackCount,
 }: SidebarProps) {
   const isAdmin = currentUser.role === 'admin';
+  const isManager = currentUser.role === 'manager';
+  const isStaff = currentUser.role === 'staff';
 
-  // Navigation items for Admin
+  // Navigation items for Admin (Toàn quyền)
   const adminNav = [
     {
       id: 'dashboard' as ActiveTab,
@@ -78,7 +80,42 @@ export function Sidebar({
     },
   ];
 
-  // Navigation items for Staff
+  // Navigation items for Trưởng/Phó phòng (Chỉ quản lý chiến dịch, xem báo cáo, không quản trị người dùng)
+  const managerNav = [
+    {
+      id: 'dashboard' as ActiveTab,
+      label: 'Tổng quan chi nhánh',
+      icon: LayoutDashboard,
+    },
+    {
+      id: 'campaigns' as ActiveTab,
+      label: 'Quản lý chiến dịch',
+      icon: Megaphone,
+    },
+    {
+      id: 'customers' as ActiveTab,
+      label: 'Danh sách khách hàng',
+      icon: Users,
+    },
+    {
+      id: 'callbacks' as ActiveTab,
+      label: 'Lịch hẹn gọi lại',
+      icon: Bell,
+      badge: callbackCount,
+    },
+    {
+      id: 'reports' as ActiveTab,
+      label: 'Báo cáo & Xuất Excel',
+      icon: FileText,
+    },
+    {
+      id: 'logs' as ActiveTab,
+      label: 'Lịch sử thao tác',
+      icon: History,
+    },
+  ];
+
+  // Navigation items for Nhân viên (Tiếp nhận & thực hiện cuộc gọi)
   const staffNav = [
     {
       id: 'staff_call' as ActiveTab,
@@ -104,7 +141,33 @@ export function Sidebar({
     },
   ];
 
-  const currentNav = isAdmin ? adminNav : staffNav;
+  let currentNav = staffNav;
+  if (isAdmin) currentNav = adminNav;
+  else if (isManager) currentNav = managerNav;
+
+  const getRoleBadge = () => {
+    if (isAdmin) {
+      return {
+        roleGroup: 'Nhóm quyền: Admin',
+        tag: 'Toàn quyền',
+        tagColor: 'bg-purple-100 text-purple-800 border-purple-200',
+      };
+    }
+    if (isManager) {
+      return {
+        roleGroup: 'Nhóm quyền: Trưởng/Phó phòng',
+        tag: 'Lãnh đạo phòng',
+        tagColor: 'bg-blue-100 text-blue-800 border-blue-200',
+      };
+    }
+    return {
+      roleGroup: 'Nhóm quyền: Nhân viên',
+      tag: 'Cán bộ CSKH',
+      tagColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    };
+  };
+
+  const roleInfo = getRoleBadge();
 
   return (
     <>
@@ -113,12 +176,12 @@ export function Sidebar({
         {/* Role identifier badge */}
         <div className="mb-4 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            {isAdmin ? 'Phân quyền Lãnh đạo' : 'Phân quyền Cán bộ'}
+            {roleInfo.roleGroup}
           </div>
           <div className="text-sm font-bold text-slate-800 flex items-center justify-between mt-0.5">
-            <span>{currentUser.fullName}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#BE1E2D]/10 text-[#BE1E2D] font-bold">
-              {isAdmin ? 'Quản lý' : 'CSKH'}
+            <span className="truncate mr-2">{currentUser.fullName}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold shrink-0 ${roleInfo.tagColor}`}>
+              {roleInfo.tag}
             </span>
           </div>
           <div className="text-xs text-slate-500 mt-0.5">{currentUser.title}</div>
