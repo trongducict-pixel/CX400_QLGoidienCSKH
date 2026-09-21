@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface VietinBankLogoProps {
   variant?: 'full' | 'icon-only' | 'white';
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  showSlogan?: boolean;
 }
 
 export function VietinBankLogo({
@@ -11,67 +12,93 @@ export function VietinBankLogo({
   className = '',
   size = 'md',
 }: VietinBankLogoProps) {
-  // Dimensions
-  const iconSize = size === 'sm' ? 24 : size === 'lg' ? 40 : 32;
+  const [imageError, setImageError] = useState(false);
 
-  // Authentic VietinBank Coin Emblem: Interlocking circular dual-color arc coin
-  const CoinIcon = (
+  // Height mappings for pristine optical balance
+  const sizeClasses = {
+    sm: 'h-6 sm:h-7',
+    md: 'h-8 sm:h-9',
+    lg: 'h-11 sm:h-13',
+    xl: 'h-14 sm:h-16',
+  };
+
+  const iconSizes = {
+    sm: 26,
+    md: 34,
+    lg: 44,
+    xl: 56,
+  };
+
+  // Authentic VietinBank Coin Emblem (Biểu tượng đồng tiền cổ ngũ hành âm dương)
+  const CoinEmblem = (
     <svg
-      width={iconSize}
-      height={iconSize}
+      width={iconSizes[size]}
+      height={iconSizes[size]}
       viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className="shrink-0"
     >
-      {/* Outer Blue Arc (Left & Top) */}
+      {/* Upper Hemisphere - Sky/Deep Blue with Square Coin Cutout */}
       <path
-        d="M 50 10 C 27.9 10 10 27.9 10 50 C 10 72.1 27.9 90 50 90 C 58.5 90 66.4 87.3 73 82.8 L 61 70.8 C 57.8 73.4 54 75 50 75 C 36.2 75 25 63.8 25 50 C 25 36.2 36.2 25 50 25 C 57.5 25 64 28.5 68.5 34 L 80.5 22 C 72.8 14.5 62 10 50 10 Z"
-        fill={variant === 'white' ? '#FFFFFF' : '#003B70'}
+        d="M 50 6 C 25.7 6 6 25.7 6 50 C 6 52.8 6.3 55.5 6.8 58.1 C 18.5 48.2 33.6 42.4 50 42.4 C 66.4 42.4 81.5 48.2 93.2 58.1 C 93.7 55.5 94 52.8 94 50 C 94 25.7 74.3 6 50 6 Z"
+        fill={variant === 'white' ? '#FFFFFF' : '#005A9C'}
       />
-      {/* Outer Red Arc (Right & Bottom) */}
-      <path
-        d="M 50 10 C 65 10 78 18 85 30 L 73 42 C 68.5 35 60 30 50 30 C 47.5 30 45.1 30.4 43 31.2 L 32 20.2 C 37.3 14 43.5 10 50 10 Z"
-        fill={variant === 'white' ? '#FFFFFF' : '#BE1E2D'}
-      />
-      {/* Red Dynamic Swoosh Arc in Inner Section */}
-      <path
-        d="M 90 50 C 90 72.1 72.1 90 50 90 L 50 75 C 63.8 75 75 63.8 75 50 C 75 42 71.5 35 66 30 L 78 18 C 85.5 26.5 90 37.5 90 50 Z"
-        fill={variant === 'white' ? '#FFFFFF' : '#BE1E2D'}
-      />
-      {/* Central Diamond Coin Hole */}
+      {/* Central Square Hole (Cửa tiền âm dương) */}
       <rect
-        x="42"
-        y="42"
-        width="16"
-        height="16"
-        transform="rotate(45 50 50)"
-        fill={variant === 'white' ? 'currentColor' : '#BE1E2D'}
+        x="38"
+        y="17"
+        width="24"
+        height="24"
+        rx="1"
+        fill="#FFFFFF"
+      />
+      {/* Lower Arc - Earth/Ruby Red */}
+      <path
+        d="M 6.8 58.1 C 11.2 78.4 28.9 94 50 94 C 71.1 94 88.8 78.4 93.2 58.1 C 80.9 49.3 65.9 44 50 44 C 34.1 44 19.1 49.3 6.8 58.1 Z"
+        fill={variant === 'white' ? '#FFFFFF' : '#BE1E2D'}
       />
     </svg>
   );
 
   if (variant === 'icon-only') {
-    return <div className={`inline-flex items-center ${className}`}>{CoinIcon}</div>;
+    return <div className={`inline-flex items-center ${className}`}>{CoinEmblem}</div>;
   }
 
+  // Full Brand Logo using uploaded official brand asset
+  if (!imageError) {
+    return (
+      <div className={`inline-flex items-center ${className}`}>
+        <img
+          src="/vietinbank-logo.png"
+          alt="VietinBank – Nâng giá trị cuộc sống"
+          referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
+          className={`w-auto ${sizeClasses[size]} object-contain select-none ${
+            variant === 'white' ? 'brightness-0 invert' : ''
+          }`}
+        />
+      </div>
+    );
+  }
+
+  // Graceful fallback SVG
   return (
-    <div className={`inline-flex items-center gap-2.5 ${className}`}>
-      {CoinIcon}
-      <div className="flex flex-col leading-none select-none">
-        <div className="flex items-baseline font-black tracking-tight text-lg sm:text-xl">
-          <span className={variant === 'white' ? 'text-white' : 'text-[#003B70]'}>Vietin</span>
-          <span className={variant === 'white' ? 'text-red-200' : 'text-[#BE1E2D]'}>Bank</span>
-          <span className={variant === 'white' ? 'text-red-200' : 'text-[#BE1E2D] font-black'}>.</span>
+    <div className={`inline-flex items-center gap-3 ${className}`}>
+      <div className="flex flex-col select-none">
+        <div className="flex items-baseline font-black tracking-tight text-xl sm:text-2xl">
+          <span className={variant === 'white' ? 'text-white' : 'text-[#005A9C]'}>Vietin</span>
+          <span className={variant === 'white' ? 'text-white' : 'text-[#005A9C]'}>Bank</span>
         </div>
         <span
-          className={`text-[9px] font-extrabold uppercase tracking-widest mt-0.5 ${
-            variant === 'white' ? 'text-red-100' : 'text-slate-500'
+          className={`text-[9px] font-bold tracking-wider ${
+            variant === 'white' ? 'text-white/80' : 'text-[#005A9C]'
           }`}
         >
           Nâng giá trị cuộc sống
         </span>
       </div>
+      {CoinEmblem}
     </div>
   );
 }

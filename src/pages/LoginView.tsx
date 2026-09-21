@@ -54,8 +54,8 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-red-50/40 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         {/* Unit Branding Header */}
-        <div className="flex justify-center mb-3">
-          <VietinBankLogo size="lg" />
+        <div className="flex justify-center mb-4">
+          <VietinBankLogo size="xl" />
         </div>
 
         <h2 className="mt-3 text-xl font-black tracking-tight text-slate-900">
